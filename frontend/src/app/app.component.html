@@ -1,0 +1,105 @@
+<div class="container">
+  <header>
+    <h1>🛡️ URL Phishing Detector</h1>
+    <p class="subtitle">AI-powered phishing detection with real-time analysis</p>
+  </header>
+
+  <main>
+    <!-- URL Check Form -->
+    <div class="check-form">
+      <h2>Check a URL</h2>
+      <div class="input-group">
+        <input
+          type="text"
+          [(ngModel)]="url"
+          placeholder="Enter URL to check (e.g., https://example.com)"
+          (keyup.enter)="checkURL()"
+          [disabled]="loading"
+        />
+        <button (click)="checkURL()" [disabled]="loading || !url.trim()">
+          {{ loading ? 'Checking...' : 'Check URL' }}
+        </button>
+      </div>
+
+      <div class="error" *ngIf="error">
+        {{ error }}
+      </div>
+    </div>
+
+    <!-- Result Display -->
+    <div class="result-card" *ngIf="result">
+      <div class="result-header">
+        <div class="verdict-badge" [ngClass]="getVerdictClass(result.verdict)">
+          <span class="verdict-icon">{{ getVerdictIcon(result.verdict) }}</span>
+          <span class="verdict-text">{{ result.verdict | uppercase }}</span>
+        </div>
+        <button class="close-btn" (click)="clearResult()">✕</button>
+      </div>
+
+      <div class="result-body">
+        <div class="result-row">
+          <strong>URL:</strong>
+          <span class="url-text">{{ result.url }}</span>
+        </div>
+
+        <div class="result-row">
+          <strong>Confidence:</strong>
+          <div class="confidence-bar">
+            <div class="confidence-fill" [style.width.%]="result.confidence * 100"></div>
+            <span class="confidence-text">{{ (result.confidence * 100).toFixed(1) }}%</span>
+          </div>
+        </div>
+
+        <div class="result-row">
+          <strong>Model Version:</strong>
+          <span>{{ result.model_version }}</span>
+        </div>
+
+        <div class="result-row">
+          <strong>Processing Time:</strong>
+          <span>{{ result.processing_time_ms }}ms</span>
+        </div>
+
+        <div class="features-section">
+          <h3>Top Contributing Features</h3>
+          <div class="feature-list">
+            <div class="feature-item" *ngFor="let feature of result.top_features">
+              <div class="feature-name">{{ feature.name }}</div>
+              <div class="feature-details">
+                <span class="feature-value">Value: {{ feature.value.toFixed(2) }}</span>
+                <span class="feature-importance">Importance: {{ (feature.contribution * 100).toFixed(1) }}%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Checks -->
+    <div class="recent-checks" *ngIf="recentChecks.length > 0">
+      <h2>Recent Checks</h2>
+      <div class="checks-table">
+        <div class="check-row header-row">
+          <div class="check-cell">URL</div>
+          <div class="check-cell">Verdict</div>
+          <div class="check-cell">Confidence</div>
+          <div class="check-cell">Time</div>
+        </div>
+        <div class="check-row" *ngFor="let check of recentChecks">
+          <div class="check-cell url-cell">{{ check.url }}</div>
+          <div class="check-cell">
+            <span class="verdict-badge-small" [ngClass]="getVerdictClass(check.verdict)">
+              {{ check.verdict }}
+            </span>
+          </div>
+          <div class="check-cell">{{ (check.confidence * 100).toFixed(0) }}%</div>
+          <div class="check-cell">{{ check.timestamp | date:'short' }}</div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <p>Powered by Machine Learning • Random Forest Classifier • {{ recentChecks.length }} checks performed</p>
+  </footer>
+</div>

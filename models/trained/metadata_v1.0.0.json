@@ -1,0 +1,56 @@
+{
+  "model_version": "v1.0.0",
+  "model_type": "RandomForestClassifier",
+  "feature_count": 25,
+  "feature_names": [
+    "url_length",
+    "domain_dots",
+    "hyphen_count",
+    "path_depth",
+    "query_param_count",
+    "digit_ratio",
+    "has_ip_address",
+    "char_entropy",
+    "suspicious_keywords",
+    "is_shortened",
+    "domain_age_days",
+    "registration_length_years",
+    "has_https",
+    "valid_ssl",
+    "cert_age_days",
+    "subdomain_count",
+    "high_risk_country",
+    "as_reputation_score",
+    "form_count",
+    "has_password_field",
+    "typosquatting_score",
+    "gsb_threat_type",
+    "vt_positives",
+    "in_phishing_list",
+    "ip_blocklisted"
+  ],
+  "training_date": "2025-11-25T23:18:03.007166",
+  "metrics": {
+    "train": {
+      "precision": 0.9903518728717366,
+      "recall": 0.9781390134529148,
+      "f1": 0.9842075578116187,
+      "auc": 0.9991962680443621,
+      "support": 0
+    },
+    "validation": {
+      "precision": 0.9887005649717514,
+      "recall": 0.9615384615384616,
+      "f1": 0.9749303621169916,
+      "auc": 0.9956513693560327,
+      "support": 0
+    },
+    "test": {
+      "precision": 0.9799426934097422,
+      "recall": 0.9715909090909091,
+      "f1": 0.9757489300998574,
+      "auc": 0.9926371916400183,
+      "support": 0
+    }
+  }
+}
