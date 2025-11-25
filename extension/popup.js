@@ -91,6 +91,31 @@ function displayResult(result) {
         featuresHTML += '</div>';
     }
 
+    let detailsHTML = '';
+    if (result.additional_info) {
+        const info = result.additional_info;
+        const location = info.server_location || 'Unknown';
+        const age = info.domain_age_days ? `${info.domain_age_days} days` : 'Unknown';
+        const https = info.is_https ? 'HTTPS' : 'HTTP';
+        const dns = info.dns_valid ? 'Valid' : 'Unknown';
+
+        detailsHTML = `
+        <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.3); font-size: 0.9rem;">
+            <div style="display: flex; justify-content: space-between; margin: 5px 0;">
+                <span style="opacity: 0.8;">Location:</span>
+                <strong>${location}</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin: 5px 0;">
+                <span style="opacity: 0.8;">Domain Age:</span>
+                <strong>${age}</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin: 5px 0;">
+                <span style="opacity: 0.8;">Security:</span>
+                <strong>${https} • DNS ${dns}</strong>
+            </div>
+        </div>`;
+    }
+
     resultDiv.className = `result ${verdict}`;
     resultDiv.innerHTML = `
     <div class="verdict">
@@ -99,6 +124,7 @@ function displayResult(result) {
     </div>
     <div class="confidence">Confidence: ${confidence}%</div>
     <div style="font-size: 0.85rem;">Model: ${result.model_version}</div>
+    ${detailsHTML}
     ${featuresHTML}
   `;
     resultDiv.style.display = 'block';

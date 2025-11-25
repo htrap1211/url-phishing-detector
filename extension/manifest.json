@@ -10,7 +10,7 @@
         "notifications"
     ],
     "host_permissions": [
-        "http://localhost:8000/*",
+        "https://url-phishing-detector-muwd.onrender.com/*",
         "http://*/*",
         "https://*/*"
     ],

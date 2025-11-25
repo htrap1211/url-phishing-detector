@@ -181,6 +181,12 @@ class PhishingDetector:
             
             if is_whitelisted:
                 logger.info(f"URL {url} is in whitelist")
+                
+                # Fetch enrichment data even for whitelisted sites
+                server_location = self._get_server_location(domain)
+                age_days = self._get_domain_age_days(url) if WHOIS_AVAILABLE else None
+                dns_valid = self._check_dns(url) if DNS_AVAILABLE else None
+                
                 return {
                     "verdict": "benign",
                     "confidence": 1.0,
@@ -189,7 +195,11 @@ class PhishingDetector:
                     "all_features": {},
                     "additional_info": {
                         "is_whitelisted": True,
-                        "domain": domain
+                        "domain": domain,
+                        "server_location": server_location,
+                        "domain_age_days": age_days,
+                        "dns_valid": dns_valid,
+                        "is_https": url.startswith("https")
                     }
                 }
         except Exception as e:
@@ -260,11 +270,14 @@ class PhishingDetector:
                             top_features.insert(0, {"name": "suspicious_content", "value": content_score, "contribution": 0.5})
 
                 # Prepare additional info
+                server_location = self._get_server_location(domain)
+                
                 additional_info = {
                     "domain_age_days": age_days if WHOIS_AVAILABLE else None,
                     "dns_valid": dns_valid if DNS_AVAILABLE and 'dns_valid' in locals() else None,
                     "is_https": url.startswith("https"),
-                    "impersonated_brand": impersonated_brand if LEVENSHTEIN_AVAILABLE and 'impersonated_brand' in locals() else None
+                    "impersonated_brand": impersonated_brand if LEVENSHTEIN_AVAILABLE and 'impersonated_brand' in locals() else None,
+                    "server_location": server_location
                 }
 
                 return {
@@ -408,6 +421,21 @@ class PhishingDetector:
         except Exception:
             pass
         return score
+    
+    def _get_server_location(self, domain: str) -> str:
+        """Get server location using IP-API (free tier)."""
+        try:
+            # Use HTTP as free tier doesn't support HTTPS
+            response = requests.get(f"http://ip-api.com/json/{domain}", timeout=1.5)
+            if response.status_code == 200:
+                data = response.json()
+                if data.get('status') == 'success':
+                    country = data.get('country')
+                    country_code = data.get('countryCode')
+                    return f"{country} {country_code}"
+        except Exception:
+            pass
+        return "Unknown"
     
     def _mock_predict(self, url: str, features: Dict) -> Dict:
         """Simple heuristic-based prediction for when ML is unavailable."""
