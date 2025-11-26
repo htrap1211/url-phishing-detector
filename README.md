@@ -253,29 +253,7 @@ Aggregate statistics and metrics
 - HTTPS everywhere
 - Database encryption at rest
 
-## 📅 Development Timeline
 
-| Week | Focus |
-|------|-------|
-| 1-2  | Backend skeleton + database + basic API |
-| 3    | Feature extraction + ML model training |
-| 4    | Third-party API integrations |
-| 5    | Frontend dashboard |
-| 6    | Browser extension |
-| 7    | Testing + bug fixes |
-| 8    | Security hardening + deployment + docs |
-
-## 🎯 MVP Deliverables
-
-- [x] Design documentation
-- [ ] Functional backend API
-- [ ] Trained ML model (>85% F1)
-- [ ] Angular dashboard
-- [ ] Browser extension (Chrome)
-- [ ] Docker Compose setup
-- [ ] Unit + integration tests
-- [ ] API documentation
-- [ ] Demo video
 
 ## 📚 Data Sources
 
@@ -327,7 +305,7 @@ This is a portfolio/educational project. Contributions welcome for:
 
 ## 📧 Contact
 
-Built by [Your Name] as a portfolio project demonstrating full-stack ML engineering.
+Built by Parth Rathi as a portfolio project demonstrating full-stack ML engineering.
 
 ## 🙏 Acknowledgments
 
