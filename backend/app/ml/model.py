@@ -208,6 +208,24 @@ class PhishingDetector:
         # Extract features (always works as it's pure Python)
         features = self.extractor.extract_all(url, enrichment_data)
         
+        # Calculate additional info (always available)
+        try:
+            domain = urlparse(url).netloc.lower()
+            server_location = self._get_server_location(domain)
+            age_days = self._get_domain_age_days(url) if WHOIS_AVAILABLE else None
+            dns_valid = self._check_dns(url) if DNS_AVAILABLE else None
+            impersonated_brand = self._check_brand_impersonation(url) if LEVENSHTEIN_AVAILABLE else None
+            
+            additional_info = {
+                "domain_age_days": age_days,
+                "dns_valid": dns_valid,
+                "is_https": url.startswith("https"),
+                "impersonated_brand": impersonated_brand,
+                "server_location": server_location
+            }
+        except Exception:
+            additional_info = {}
+
         if self.model and self.scaler and ML_AVAILABLE:
             try:
                 # Real prediction
@@ -224,36 +242,30 @@ class PhishingDetector:
                 top_features = self._get_top_features(features, prediction)
                 
                 # Check domain age (Heuristic)
-                if WHOIS_AVAILABLE:
-                    age_days = self._get_domain_age_days(url)
-                    if age_days is not None and age_days < 30:
-                        logger.info(f"Domain is new ({age_days} days). Adjusting verdict.")
-                        if verdict == "benign":
-                            verdict = "suspicious"
-                            confidence = 0.65
-                            top_features.insert(0, {"name": "newly_registered_domain", "value": age_days, "contribution": 0.5})
-                        elif verdict == "suspicious":
-                            verdict = "malicious"
-                            confidence = min(confidence + 0.2, 0.99)
-                            top_features.insert(0, {"name": "newly_registered_domain", "value": age_days, "contribution": 0.8})
+                if additional_info.get("domain_age_days") is not None and additional_info["domain_age_days"] < 30:
+                    logger.info(f"Domain is new ({additional_info['domain_age_days']} days). Adjusting verdict.")
+                    if verdict == "benign":
+                        verdict = "suspicious"
+                        confidence = 0.65
+                        top_features.insert(0, {"name": "newly_registered_domain", "value": additional_info["domain_age_days"], "contribution": 0.5})
+                    elif verdict == "suspicious":
+                        verdict = "malicious"
+                        confidence = min(confidence + 0.2, 0.99)
+                        top_features.insert(0, {"name": "newly_registered_domain", "value": additional_info["domain_age_days"], "contribution": 0.8})
                 
                 # Check brand impersonation (Heuristic)
-                if LEVENSHTEIN_AVAILABLE:
-                    impersonated_brand = self._check_brand_impersonation(url)
-                    if impersonated_brand:
-                        logger.info(f"Brand impersonation detected: {impersonated_brand}")
-                        verdict = "malicious"
-                        confidence = 0.95
-                        top_features.insert(0, {"name": f"impersonates_{impersonated_brand}", "value": 1.0, "contribution": 0.9})
+                if additional_info.get("impersonated_brand"):
+                    logger.info(f"Brand impersonation detected: {additional_info['impersonated_brand']}")
+                    verdict = "malicious"
+                    confidence = 0.95
+                    top_features.insert(0, {"name": f"impersonates_{additional_info['impersonated_brand']}", "value": 1.0, "contribution": 0.9})
 
                 # Check DNS (Heuristic)
-                if DNS_AVAILABLE:
-                    dns_valid = self._check_dns(url)
-                    if not dns_valid:
-                        logger.info("DNS lookup failed. Domain might be invalid.")
-                        verdict = "malicious"
-                        confidence = 0.9
-                        top_features.insert(0, {"name": "invalid_dns", "value": 1.0, "contribution": 0.8})
+                if additional_info.get("dns_valid") is False:
+                    logger.info("DNS lookup failed. Domain might be invalid.")
+                    verdict = "malicious"
+                    confidence = 0.9
+                    top_features.insert(0, {"name": "invalid_dns", "value": 1.0, "contribution": 0.8})
 
                 # Check Content (Heuristic) - Only if not already malicious and confidence < 0.9
                 if CONTENT_ANALYSIS_AVAILABLE and verdict != "malicious":
@@ -269,17 +281,6 @@ class PhishingDetector:
                             confidence = max(confidence, 0.7)
                             top_features.insert(0, {"name": "suspicious_content", "value": content_score, "contribution": 0.5})
 
-                # Prepare additional info
-                server_location = self._get_server_location(domain)
-                
-                additional_info = {
-                    "domain_age_days": age_days if WHOIS_AVAILABLE else None,
-                    "dns_valid": dns_valid if DNS_AVAILABLE and 'dns_valid' in locals() else None,
-                    "is_https": url.startswith("https"),
-                    "impersonated_brand": impersonated_brand if LEVENSHTEIN_AVAILABLE and 'impersonated_brand' in locals() else None,
-                    "server_location": server_location
-                }
-
                 return {
                     "verdict": verdict,
                     "confidence": confidence,
@@ -292,7 +293,7 @@ class PhishingDetector:
                 logger.error(f"Prediction failed: {e}. Falling back to mock.")
         
         # Mock prediction (heuristic based)
-        return self._mock_predict(url, features)
+        return self._mock_predict(url, features, additional_info)
 
     def _get_domain_age_days(self, url: str) -> int:
         """Get domain age in days."""
@@ -437,7 +438,7 @@ class PhishingDetector:
             pass
         return "Unknown"
     
-    def _mock_predict(self, url: str, features: Dict) -> Dict:
+    def _mock_predict(self, url: str, features: Dict, additional_info: Dict = None) -> Dict:
         """Simple heuristic-based prediction for when ML is unavailable."""
         score = 0
         
@@ -478,7 +479,8 @@ class PhishingDetector:
             "confidence": confidence,
             "model_version": f"{self.model_version}-mock",
             "top_features": top_features[:5],
-            "all_features": features
+            "all_features": features,
+            "additional_info": additional_info
         }
 
     def _get_top_features(self, features: Dict, prediction: int, top_n: int = 5) -> List[Dict]:
