@@ -100,6 +100,7 @@ async def get_check_result(
             model_version=url_check.model_version,
             top_features=prediction["top_features"],
             enrichments=[],  # Empty for MVP, will add in Phase 5
+            additional_info=prediction.get("additional_info"),
             processing_time_ms=url_check.processing_time_ms,
             timestamp=url_check.created_at
         )
@@ -149,6 +150,7 @@ async def get_check_detail(
             model_version=url_check.model_version,
             top_features=prediction["top_features"],
             enrichments=[],
+            additional_info=prediction.get("additional_info"),
             processing_time_ms=url_check.processing_time_ms,
             timestamp=url_check.created_at,
             raw_enrichments=raw_enrichments,

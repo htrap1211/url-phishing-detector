@@ -44,6 +44,7 @@ class URLCheckResult(BaseModel):
     
     top_features: List[FeatureContribution]
     enrichments: Optional[List[EnrichmentSummary]] = None
+    additional_info: Optional[Dict[str, Any]] = None
     
     processing_time_ms: Optional[int] = None
     timestamp: datetime
